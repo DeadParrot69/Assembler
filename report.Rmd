@@ -1,0 +1,196 @@
+---
+title: "Analysis Report"
+output: pdf_document
+params:
+    args: ' '
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Sample name
+```{r name, echo=FALSE}
+
+cat(paste ("Analysis was conducted on the sample"), params$args)
+
+```
+
+
+
+## Read input information analysis 
+Information about the input filtered fasta files
+```{r fastqc1, echo=FALSE}
+
+setwd(paste ("/fs/dss/groups/agmedmibi/Assemblies/",params$args,"/readQCreports/filtered.R1_001_fastqc", sep=""))
+data = read.delim ("summary.txt")[,1:3]
+colnames(data)=c("Status","Test", "File")
+
+kable(data, format="markdown")   
+```
+
+```{r fastqc2, echo=FALSE}
+
+
+setwd(paste ("/fs/dss/groups/agmedmibi/Assemblies/",params$args,"/readQCreports/filtered.R2_001_fastqc", sep=""))
+data = read.delim ("summary.txt")[,1:3]
+colnames(data)=c("Status","Test", "File")
+
+kable(data, format="markdown")  
+
+
+
+```
+
+
+## Assembly analysis
+
+```{r astats, echo=FALSE}
+
+setwd(paste ("/fs/dss/groups/agmedmibi/Assemblies/",params$args, sep=""))
+data = read.delim ("astats.txt")
+colnames(data)=c("filename", "total.l", "nr.con", "mean.con.l", "longst", "shortst","", "", "N50", "N50n", "N70", "N70n","N90", "N90n")
+data[,1]=substr (data[,1],1,11)
+kable(data [,c(1:6,9:14) ], format="markdown")  
+
+
+```
+
+
+\newpage
+
+## Species identification
+***Whole genome BLAST in prokaryotic database***, each assembled contig is blasted against prokaryotic reference genome database, the top hit for each contig is shown, only contigs longer than 500bp are included. 
+
+```{r WGblast, echo=FALSE}
+
+setwd(paste ("/fs/dss/groups/agmedmibi/Assemblies/",params$args, sep=""))
+
+
+if (file.info ("Blast_results_pro.csv")$size == 0){ 
+
+print ("No hits")
+
+} else {
+ blastdataWGS=read.csv ("Blast_results_pro.csv", header = F)
+blastdataWGS=blastdataWGS[blastdataWGS[,8]>500,]
+output=aggregate ( blastdataWGS[,4]~blastdataWGS[,1], blastdataWGS, FUN=unique )
+colnames(output)=c("Contig (higher numbers are longer)",  "Top hit in Refgenome database")
+kable (output, format="markdown")
+  
+}
+
+
+```
+
+***16s BLAST top hit***, only applicable for prokaryotes (can be two hits if 16s spread across two contigs)
+```{r 16sblast , echo=FALSE}
+
+setwd(paste ("/fs/dss/groups/agmedmibi/Assemblies/",params$args, sep=""))
+
+
+if (file.info ("Blast_results_16s.csv")$size == 0){ 
+
+print ("No hits")
+
+} else {
+ blastdata=read.csv ("Blast_results_16s.csv", header = F)
+ colnames (blastdata)= c("assembly contig","", "", "species", "", "", "percentage identity", "length of alignment", "e-value")
+ kable (blastdata [,c(1,4, 7:9)], format="markdown")
+
+}
+
+
+```
+
+
+
+***18s BLAST top hit***, only applicable for fungi  (can be two hits if 16s spread across two contigs)
+```{r 18sblast , echo=FALSE}
+
+setwd(paste ("/fs/dss/groups/agmedmibi/Assemblies/",params$args, sep=""))
+
+
+if (file.info ("Blast_results_18s.csv")$size == 0){ 
+
+print ("No hits")
+
+} else {
+ blastdata=read.csv ("Blast_results_18s.csv", header = F)
+ colnames (blastdata)= c("assembly contig","", "", "species", "", "", "percentage identity", "length of alignment", "e-value")
+  kable (blastdata [,c(1,4, 7:9)], format="markdown")
+}
+
+
+```
+
+
+
+***ITS BLAST top hit***, only applicable for fungi (can be two hits if 16s spread across two contigs)
+```{r ITSblast , echo=FALSE}
+
+setwd(paste ("/fs/dss/groups/agmedmibi/Assemblies/",params$args, sep=""))
+
+
+if (file.info ("Blast_results_ITS.csv")$size == 0){ 
+
+print ("No hits")
+
+} else {
+ blastdata=read.csv ("Blast_results_ITS.csv", header = F)
+ colnames (blastdata)= c("assembly contig","", "", "species", "", "", "percentage identity", "length of alignment", "e-value")
+  kable (blastdata [,c(1,4, 7:9)], format="markdown")
+}
+
+```
+
+
+
+***Remote NT database BLAST top 5 hits***, uses the first 10000bp of the genome and blasts this against the standard NCBI database. Top 5 hits are shown, titles here may be indicative of exact strain affinty (but not defintively).
+
+
+```{r remoteblast , echo=FALSE}
+
+setwd(paste ("/fs/dss/groups/agmedmibi/Assemblies/",params$args, sep=""))
+
+if (file.info ("Blast_results_remote.csv")$size == 0){ 
+
+print ("No hits")
+
+} else {
+ blastdata=read.csv ("Blast_results_remote.csv", header = F)
+data=rbind ( c(1, unique (blastdata [blastdata[,7]!="",7])[1], unique (blastdata [blastdata[,2]!="",2])[1]), 
+             c(2, unique (blastdata [blastdata[,7]!="",7])[2], unique (blastdata [blastdata[,2]!="",2])[2]), 
+             c(3, unique (blastdata [blastdata[,7]!="",7])[3], unique (blastdata [blastdata[,2]!="",2])[3]), 
+             c(4, unique (blastdata [blastdata[,7]!="",7])[4], unique (blastdata [blastdata[,2]!="",2])[4]),
+             c(5, unique (blastdata [blastdata[,7]!="",7])[5], unique (blastdata [blastdata[,2]!="",2])[5]))
+            
+kable(data, format="markdown")    
+            
+            
+            
+}
+
+```
+
+
+
+
+
+
+## Resfinder analysis
+
+
+```{r resfinder , echo=FALSE}
+
+setwd(paste ("/fs/dss/groups/agmedmibi/Assemblies/",params$args, sep=""))
+
+
+
+data=read.delim ("resfinder/ResFinder_results_tab.txt")
+colnames(data)=c("Res.gen", "%ID", "Align.L/gen.L", "Cov", "", "", "", "Phenotype", "Accesion.no")
+data[,4]=round (data[,4], digits=1)
+kable(data [,c(1:4,8,9) ], format="markdown")
+
+```
+
+
